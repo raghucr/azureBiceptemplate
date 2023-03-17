@@ -1,0 +1,40 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "resourcePrefix": {
+      "value": "icepp"
+    },
+    "virtualNetworkPrefix": {
+      "value": "10.123.0.0/16"
+    },
+    "publicIpSku": {
+      "value": "Basic"
+    },
+    "publicIPAllocationMethod": {
+      "value": "Dynamic"
+    },
+    "vmName": {
+      "value": "simple-bicepvm"
+    },
+    "publicIpName": {
+      "value": "myPublicIP"
+    },
+    "OSVersion": {
+      "value": "2022-datacenter-azure-edition"
+    },
+    "vmSize": {
+      "value": "Standard_D2s_v5"
+    },
+    "securityType": {
+      "value": "TrustedLaunch"
+    },
+   
+    "adminUsername": {
+      "value": "Bicepadmin"
+    },
+    "adminPassword": {
+      "value": "Bicepadmin@12345"
+    }
+  }
+}

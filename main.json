@@ -1,0 +1,675 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.15.31.15270",
+      "templateHash": "3780104158522348888"
+    }
+  },
+  "parameters": {
+    "resourcePrefix": {
+      "type": "string"
+    },
+    "virtualNetworkPrefix": {
+      "type": "string"
+    },
+    "currentDate": {
+      "type": "string",
+      "defaultValue": "[utcNow('yyyy-MM-dd')]"
+    },
+    "publicIpSku": {
+      "type": "string"
+    },
+    "publicIPAllocationMethod": {
+      "type": "string"
+    },
+    "vmName": {
+      "type": "string"
+    },
+    "publicIpName": {
+      "type": "string"
+    },
+    "OSVersion": {
+      "type": "string"
+    },
+    "vmSize": {
+      "type": "string"
+    },
+    "securityType": {
+      "type": "string"
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    }
+  },
+  "variables": {
+    "subnetname": "[format('{0}-sn', parameters('resourcePrefix'))]",
+    "tagValues": {
+      "CreatedBy": "BICEPDeployment",
+      "deploymentDate": "[parameters('currentDate')]"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "publicIp",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "vmName": {
+            "value": "[parameters('vmName')]"
+          },
+          "publicIpName": {
+            "value": "[parameters('publicIpName')]"
+          },
+          "tagValues": {
+            "value": "[variables('tagValues')]"
+          },
+          "publicIpSku": {
+            "value": "[parameters('publicIpSku')]"
+          },
+          "publicIPAllocationMethod": {
+            "value": "[parameters('publicIPAllocationMethod')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.15.31.15270",
+              "templateHash": "11567276351747690845"
+            }
+          },
+          "parameters": {
+            "publicIpName": {
+              "type": "string",
+              "defaultValue": "myPublicIP",
+              "metadata": {
+                "description": "Name for the Public IP used to access the Virtual Machine."
+              }
+            },
+            "publicIpSku": {
+              "type": "string",
+              "defaultValue": "Basic",
+              "allowedValues": [
+                "Basic",
+                "Standard"
+              ],
+              "metadata": {
+                "description": "SKU for the Public IP used to access the Virtual Machine."
+              }
+            },
+            "publicIPAllocationMethod": {
+              "type": "string",
+              "defaultValue": "Dynamic"
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location for all resources."
+              }
+            },
+            "tagValues": {
+              "type": "object"
+            },
+            "vmName": {
+              "type": "string"
+            },
+            "dnsLabelPrefix": {
+              "type": "string",
+              "defaultValue": "[toLower(format('{0}-{1}', parameters('vmName'), uniqueString(resourceGroup().id, parameters('vmName'))))]",
+              "metadata": {
+                "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/publicIPAddresses",
+              "apiVersion": "2022-05-01",
+              "name": "[parameters('publicIpName')]",
+              "tags": "[parameters('tagValues')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "[parameters('publicIpSku')]"
+              },
+              "properties": {
+                "publicIPAllocationMethod": "[parameters('publicIPAllocationMethod')]",
+                "dnsSettings": {
+                  "domainNameLabel": "[parameters('dnsLabelPrefix')]"
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "publicipid": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "sta",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "storageAccountPrefix": {
+            "value": "[parameters('resourcePrefix')]"
+          },
+          "tagValues": {
+            "value": "[variables('tagValues')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.15.31.15270",
+              "templateHash": "16610422252027080310"
+            }
+          },
+          "parameters": {
+            "storageAccountPrefix": {
+              "type": "string",
+              "maxLength": 5
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "tagValues": {
+              "type": "object"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2021-01-01",
+              "name": "[format('{0}{1}', parameters('storageAccountPrefix'), uniqueString(resourceGroup().id))]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "Standard_LRS"
+              },
+              "kind": "StorageV2",
+              "tags": "[parameters('tagValues')]",
+              "properties": {
+                "supportsHttpsTrafficOnly": true
+              }
+            }
+          ],
+          "outputs": {
+            "staid": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Storage/storageAccounts', format('{0}{1}', parameters('storageAccountPrefix'), uniqueString(resourceGroup().id)))]"
+            },
+            "stauri": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', format('{0}{1}', parameters('storageAccountPrefix'), uniqueString(resourceGroup().id))), '2021-01-01').primaryEndpoints.blob]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "nsg",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "ResourcePrefix": {
+            "value": "[parameters('resourcePrefix')]"
+          },
+          "tagValues": {
+            "value": "[variables('tagValues')]"
+          },
+          "securityRules": {
+            "value": []
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.15.31.15270",
+              "templateHash": "14669455157652907138"
+            }
+          },
+          "parameters": {
+            "ResourcePrefix": {
+              "type": "string",
+              "defaultValue": "bicep"
+            },
+            "ResourceName": {
+              "type": "string",
+              "defaultValue": "bicep"
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "tagValues": {
+              "type": "object"
+            },
+            "securityRules": {
+              "type": "array"
+            }
+          },
+          "variables": {
+            "nsgName": "[if(not(empty(parameters('ResourcePrefix'))), format('{0}-NSG', parameters('ResourcePrefix')), parameters('ResourceName'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2020-06-01",
+              "name": "[variables('nsgName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tagValues')]",
+              "properties": {
+                "copy": [
+                  {
+                    "name": "securityRules",
+                    "count": "[length(parameters('securityRules'))]",
+                    "input": {
+                      "name": "[parameters('securityRules')[copyIndex('securityRules')].name]",
+                      "properties": {
+                        "protocol": "[parameters('securityRules')[copyIndex('securityRules')].protocol]",
+                        "sourcePortRange": "[parameters('securityRules')[copyIndex('securityRules')].sourcePortRange]",
+                        "destinationPortRange": "[parameters('securityRules')[copyIndex('securityRules')].destinationPortRange]",
+                        "sourceAddressPrefix": "[parameters('securityRules')[copyIndex('securityRules')].sourceAddressPrefix]",
+                        "destinationAddressPrefix": "[parameters('securityRules')[copyIndex('securityRules')].destinationAddressPrefix]",
+                        "access": "[parameters('securityRules')[copyIndex('securityRules')].access]",
+                        "priority": "[parameters('securityRules')[copyIndex('securityRules')].priority]",
+                        "direction": "[parameters('securityRules')[copyIndex('securityRules')].direction]"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "outputs": {
+            "nsgid": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "vnet",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "ResourcePrefix": {
+            "value": "[parameters('resourcePrefix')]"
+          },
+          "tagValues": {
+            "value": "[variables('tagValues')]"
+          },
+          "subnetName": {
+            "value": "[variables('subnetname')]"
+          },
+          "virtualNetworkPrefix": {
+            "value": "[replace(parameters('virtualNetworkPrefix'), '0.0/16', '1.0/24')]"
+          },
+          "subnetPrefix": {
+            "value": "10.0.0.0/24"
+          },
+          "nsgId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'nsg'), '2020-10-01').outputs.nsgid.value]"
+          },
+          "publicIp": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'publicIp'), '2020-10-01').outputs.publicipid.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.15.31.15270",
+              "templateHash": "18235071840641700219"
+            }
+          },
+          "parameters": {
+            "ResourcePrefix": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "ResourceName": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "virtualNetworkPrefix": {
+              "type": "string"
+            },
+            "subnetPrefix": {
+              "type": "string"
+            },
+            "nsgId": {
+              "type": "string"
+            },
+            "tagValues": {
+              "type": "object"
+            },
+            "publicIp": {
+              "type": "string"
+            },
+            "subnetName": {
+              "type": "string",
+              "defaultValue": "Subnet"
+            }
+          },
+          "variables": {
+            "vnetName": "[if(not(empty(parameters('ResourcePrefix'))), format('{0}-VNET', parameters('ResourcePrefix')), parameters('ResourceName'))]",
+            "vnicName": "[if(not(empty(parameters('ResourcePrefix'))), format('{0}-nic', parameters('ResourcePrefix')), parameters('ResourceName'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2020-06-01",
+              "name": "[variables('vnetName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tagValues')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('virtualNetworkPrefix')]"
+                  ]
+                },
+                "subnets": [
+                  {
+                    "name": "[parameters('subnetName')]",
+                    "properties": {
+                      "addressPrefix": "[parameters('subnetPrefix')]",
+                      "networkSecurityGroup": {
+                        "id": "[parameters('nsgId')]"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Network/networkInterfaces",
+              "apiVersion": "2022-05-01",
+              "name": "[variables('vnicName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "ipConfigurations": [
+                  {
+                    "name": "ipconfig1",
+                    "properties": {
+                      "privateIPAllocationMethod": "Dynamic",
+                      "publicIPAddress": {
+                        "id": "[parameters('publicIp')]"
+                      },
+                      "subnet": {
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), parameters('subnetName'))]"
+                      }
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "vnetid": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+            },
+            "vnetname": {
+              "type": "string",
+              "value": "[variables('vnetName')]"
+            },
+            "nicid": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/networkInterfaces', variables('vnicName'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'nsg')]",
+        "[resourceId('Microsoft.Resources/deployments', 'publicIp')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "vm",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "OSVersion": {
+            "value": "[parameters('OSVersion')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
+          },
+          "vmName": {
+            "value": "[parameters('vmName')]"
+          },
+          "securityType": {
+            "value": "[parameters('securityType')]"
+          },
+          "nicid": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnet'), '2020-10-01').outputs.nicid.value]"
+          },
+          "stauri": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'sta'), '2020-10-01').outputs.stauri.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.15.31.15270",
+              "templateHash": "7589511586678507900"
+            }
+          },
+          "parameters": {
+            "adminUsername": {
+              "type": "string",
+              "metadata": {
+                "description": "Username for the Virtual Machine."
+              }
+            },
+            "adminPassword": {
+              "type": "securestring",
+              "minLength": 12,
+              "metadata": {
+                "description": "Password for the Virtual Machine."
+              }
+            },
+            "OSVersion": {
+              "type": "string"
+            },
+            "vmSize": {
+              "type": "string",
+              "metadata": {
+                "description": "Size of the virtual machine."
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location for all resources."
+              }
+            },
+            "vmName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the virtual machine."
+              }
+            },
+            "securityType": {
+              "type": "string",
+              "allowedValues": [
+                "Standard",
+                "TrustedLaunch"
+              ],
+              "metadata": {
+                "description": "Security Type of the Virtual Machine."
+              }
+            },
+            "nicid": {
+              "type": "string"
+            },
+            "stauri": {
+              "type": "string"
+            }
+          },
+          "variables": {
+            "securityProfileJson": {
+              "uefiSettings": {
+                "secureBootEnabled": true,
+                "vTpmEnabled": true
+              },
+              "securityType": "[parameters('securityType')]"
+            },
+            "extensionName": "GuestAttestation",
+            "extensionPublisher": "Microsoft.Azure.Security.WindowsAttestation",
+            "extensionVersion": "1.0",
+            "maaTenantName": "GuestAttestation",
+            "maaEndpoint": "[substring('emptyString', 0, 0)]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Compute/virtualMachines",
+              "apiVersion": "2022-03-01",
+              "name": "[parameters('vmName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "hardwareProfile": {
+                  "vmSize": "[parameters('vmSize')]"
+                },
+                "osProfile": {
+                  "computerName": "[parameters('vmName')]",
+                  "adminUsername": "[parameters('adminUsername')]",
+                  "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                  "imageReference": {
+                    "publisher": "MicrosoftWindowsServer",
+                    "offer": "WindowsServer",
+                    "sku": "[parameters('OSVersion')]",
+                    "version": "latest"
+                  },
+                  "osDisk": {
+                    "createOption": "FromImage",
+                    "managedDisk": {
+                      "storageAccountType": "StandardSSD_LRS"
+                    }
+                  },
+                  "dataDisks": [
+                    {
+                      "diskSizeGB": 1023,
+                      "lun": 0,
+                      "createOption": "Empty"
+                    }
+                  ]
+                },
+                "networkProfile": {
+                  "networkInterfaces": [
+                    {
+                      "id": "[parameters('nicid')]"
+                    }
+                  ]
+                },
+                "diagnosticsProfile": {
+                  "bootDiagnostics": {
+                    "enabled": true,
+                    "storageUri": "[parameters('stauri')]"
+                  }
+                },
+                "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), json('null'))]"
+              }
+            },
+            {
+              "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
+              "type": "Microsoft.Compute/virtualMachines/extensions",
+              "apiVersion": "2022-03-01",
+              "name": "[format('{0}/{1}', parameters('vmName'), variables('extensionName'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "publisher": "[variables('extensionPublisher')]",
+                "type": "[variables('extensionName')]",
+                "typeHandlerVersion": "[variables('extensionVersion')]",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                  "AttestationConfig": {
+                    "MaaSettings": {
+                      "maaEndpoint": "[variables('maaEndpoint')]",
+                      "maaTenantName": "[variables('maaTenantName')]"
+                    }
+                  }
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'sta')]",
+        "[resourceId('Microsoft.Resources/deployments', 'vnet')]"
+      ]
+    }
+  ]
+}
